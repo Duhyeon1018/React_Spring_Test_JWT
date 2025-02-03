@@ -2,6 +2,7 @@ package com.busanit501.api5012.config;
 
 import com.busanit501.api5012.security.APIUserDetailsService;
 import com.busanit501.api5012.security.filter.APILoginFilter;
+import com.busanit501.api5012.security.handler.APILoginSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -66,9 +67,18 @@ public class CustomSecurityConfig {
         http.authenticationManager(authenticationManager);
 
         //APILoginFilter 세팅1
+        // 아이디:mid- lsy, 패스워드: mpw- 1234 첨부해서,
+        // localhost:8080/generateToken
+        // 디비 등록된 유저에 대해서만, 토큰 발급.
+
         APILoginFilter apiLoginFilter = new APILoginFilter("/generateToken");
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
+        // APILoginSuccessHandler 생성: 인증 성공 후 처리 로직을 담당
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler();
+
+// SuccessHandler 설정: 로그인 성공 시 APILoginSuccessHandler가 호출되도록 설정
+        apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
 
         //APILoginFilter의 위치 조정 세팅1, 사용자 인증 전에 ,
         http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
