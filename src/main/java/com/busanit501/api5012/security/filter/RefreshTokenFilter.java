@@ -1,6 +1,7 @@
 package com.busanit501.api5012.security.filter;
 
 import com.busanit501.api5012.util.JWTUtil;
+import com.google.gson.Gson;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -10,6 +11,9 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.util.Map;
 
 @Log4j2
 @RequiredArgsConstructor
@@ -34,39 +38,45 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
 
         // 2. refreshPath 요청에 대한 처리 로직
         log.info("Refresh Token Filter triggered for path: {}", path);
-//
-//        try {
-//            // 3. Refresh Token 검증 (JWTUtil 사용)
-//            String token = extractToken(request);
-//            if (token != null) {
-//                jwtUtil.validateToken(token); // 토큰 검증
-//                log.info("Refresh Token is valid.");
-//            } else {
-//                log.warn("No Refresh Token found in the request.");
-//                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-//                response.getWriter().write("Missing Refresh Token");
-//                return;
-//            }
-//
-//        } catch (Exception e) {
-//            log.error("Invalid Refresh Token: {}", e.getMessage());
-//            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-//            response.getWriter().write("Invalid Refresh Token");
-//            return;
-//        }
-//
-//        // 4. 다음 필터로 전달
-//        filterChain.doFilter(request, response);
-//    }
-//
-//    /**
-//     * Extracts the token from the Authorization header.
-//     */
-//    private String extractToken(HttpServletRequest request) {
-//        String header = request.getHeader("Authorization");
-//        if (header != null && header.startsWith("Bearer ")) {
-//            return header.substring(7).trim();
-//        }
-//        return null;
+
+// 2. 요청에서 accessToken과 refreshToken 추출
+        try {
+            Map<String, String> tokens = parseRequestJSON(request);
+            if (tokens == null || !tokens.containsKey("accessToken") || !tokens.containsKey("refreshToken")) {
+                log.error("Missing tokens in request.");
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                response.getWriter().write("Missing accessToken or refreshToken.");
+                return;
+            }
+
+            String accessToken = tokens.get("accessToken");
+            String refreshToken = tokens.get("refreshToken");
+
+            log.info("accessToken: {}", accessToken);
+            log.info("refreshToken: {}", refreshToken);
+
+            // 이후 로직 추가: Refresh Token 검증 및 처리
+
+        } catch (Exception e) {
+            log.error("Error parsing request JSON: {}", e.getMessage());
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.getWriter().write("Invalid JSON format.");
+            return;
+        }
+
+
+    }
+
+    /**
+     * 요청에서 JSON 데이터를 Map으로 변환
+     */
+    private Map<String, String> parseRequestJSON(HttpServletRequest request) {
+        try (Reader reader = new InputStreamReader(request.getInputStream())) {
+            Gson gson = new Gson();
+            return gson.fromJson(reader, Map.class);
+        } catch (Exception e) {
+            log.error("Error reading JSON from request: {}", e.getMessage());
+        }
+        return null;
     }
 }
