@@ -2,57 +2,66 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Token Refresh Example</title>
+    <title>Title</title>
 </head>
 <body>
+
 <h1>ACCESS TOKEN</h1>
+
 <h3 class="accessOld"></h3>
+
 <h3 class="accessResult"></h3>
+
 <hr/>
+
 <h1>REFRESH TOKEN</h1>
+
 <h3 class="refreshOld"></h3>
+
 <h3 class="refreshResult"></h3>
+
 <button class="btn1">Refresh</button>
 
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script>
-    // 기존 토큰 가져오기
-    const oldAccessToken = localStorage.getItem("accessToken");
-    const oldRefreshToken = localStorage.getItem("refreshToken");
 
-    // 기존 토큰 화면에 표시
-    document.querySelector(".accessOld").innerHTML = oldAccessToken || "No Access Token Found";
-    document.querySelector(".refreshOld").innerHTML = oldRefreshToken || "No Refresh Token Found";
 
-    // 버튼 클릭 이벤트 리스너 등록
+    const oldAccessToken = localStorage.getItem("accessToken")
+    const oldRefreshToken = localStorage.getItem("refreshToken")
+
+    document.querySelector(".accessOld").innerHTML = oldAccessToken
+    document.querySelector(".refreshOld").innerHTML = oldRefreshToken
+
+
+
     document.querySelector(".btn1").addEventListener("click", () => {
-        axios
-            .post("http://localhost:8080/refreshToken", {
-                accessToken: oldAccessToken,
-                refreshToken: oldRefreshToken,
-            })
-            .then((res) => {
-                console.log(res.data);
 
-                // 새로운 토큰 받기
-                const newAccessToken = res.data.accessToken;
-                const newRefreshToken = res.data.refreshToken;
 
-                // 결과 비교 후 화면에 표시
+        axios.post('http://localhost:8080/refreshToken',
+            {accessToken: oldAccessToken, refreshToken: oldRefreshToken})
+            .then(res => {
+                console.log(res.data)
+
+                const newAccessToken = res.data.accessToken
+                const newRefreshToken = res.data.refreshToken
+
                 document.querySelector(".accessResult").innerHTML =
-                    oldAccessToken !== newAccessToken ? newAccessToken : "OLD";
+                    oldAccessToken !== newAccessToken?newAccessToken:'OLD'
                 document.querySelector(".refreshResult").innerHTML =
-                    oldRefreshToken !== newRefreshToken ? newRefreshToken : "OLD";
+                    oldRefreshToken !== newRefreshToken?newRefreshToken:'OLD'
 
-                // 새로운 토큰을 로컬 스토리지에 저장
-                // localStorage.setItem("accessToken", newAccessToken);
-                // localStorage.setItem("refreshToken", newRefreshToken);
+
             })
-            .catch((error) => {
-                console.error("Error refreshing tokens:", error);
-                alert("Failed to refresh tokens. Please try again.");
-            });
-    });
+            .catch(error => {
+                    console.error(error)
+                }
+            )
+
+
+    },false)
+
+
 </script>
+
 </body>
 </html>

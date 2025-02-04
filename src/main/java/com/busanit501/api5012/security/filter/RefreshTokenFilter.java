@@ -120,7 +120,23 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
         log.info("Refresh Token result....................");
         log.info("accessToken: " + accessTokenValue);
         log.info("refreshToken: " + refreshTokenValue);
+//// 시나리오, 확인
+//        1 액세스 토큰 유효함
+//        1일
+//        eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtaWQiOiJhcGl1c2VyMTAiLCJpYXQiOjE3Mzg2MzY5MDAsImV4cCI6MTczODcyMzMwMH0.W4yv_1H4_2Psl17NWoZSbepe1rVHpnjwSjJrBmnNnrU
+//        리플레쉬 토큰  30일
+//        eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtaWQiOiJhcGl1c2VyMTAiLCJpYXQiOjE3Mzg2MzY5MDAsImV4cCI6MTc0MTIyODkwMH0.y5PfSgdTBsKwyyX692fgEvsKFchqNFBLuj3fIS0-hhI
 //
+//        2 리플레쉬 토큰 유효함(초기: 기간30일)
+//
+//
+//, 단, 기간이 3일 미만으로 남았을 경우,
+//        리플레쉬 토큰의 만료기간을 변조해서, 1일 정도 남게 설정.
+//        eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJtaWQiOiJhcGl1c2VyMTAiLCJpYXQiOjE3Mzg2MzY5MDAsImV4cCI6MTczODcyODkwMH0.-Dp_zI0x0XQGU4oBcbYuvpFUNJq0RZ_3HwY56-RJ3AE
+//
+//        3 새롭게 리플레쉬 토큰 3일 로 발급.
+//            eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6ImFwaXVzZXIxMCIsImlhdCI6MTczODYzNzEwMCwiZXhwIjoxNzM4ODk2MzAwfQ.W3rCCg9GMK9J_xiUms87kSIVdSfDX-8U3fYZ7rQ3nWQ
+
         sendTokens(accessTokenValue, refreshTokenValue, response);
 
 
