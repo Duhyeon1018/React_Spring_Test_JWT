@@ -4,17 +4,21 @@ import com.busanit501.api5012.security.exception.RefreshTokenException;
 import com.busanit501.api5012.util.JWTUtil;
 import com.google.gson.Gson;
 import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.time.Instant;
+import java.util.Date;
 import java.util.Map;
 
 @Log4j2
@@ -69,7 +73,55 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
             }
 
             // 이후 로직 추가: Refresh Token 검증 및 처리
+        Map<String, Object> refreshClaims = null;
 
+        try {
+            // Refresh Token 검증
+            refreshClaims = checkRefreshToken(refreshToken);
+            log.info("Refresh Token Claims: {}", refreshClaims);
+        } catch (RefreshTokenException refreshTokenException) {
+            // Refresh Token 검증 실패 시 에러 응답 전송
+            refreshTokenException.sendResponseError(response);
+            return; // 이후 코드 실행 중단
+        }
+
+        // 리플레쉬 토큰이 만료가 되는 시점 계산 하는 부분,
+        //Refresh Token의 유효시간이 얼마 남지 않은 경우
+        Integer exp = (Integer)refreshClaims.get("exp");
+
+        Date expTime = new Date(Instant.ofEpochMilli(exp).toEpochMilli() * 1000);
+
+        Date current = new Date(System.currentTimeMillis());
+
+        //만료 시간과 현재 시간의 간격 계산
+        //만일 3일 미만인 경우에는 Refresh Token도 다시 생성
+        long gapTime = (expTime.getTime() - current.getTime());
+
+        log.info("-----------------------------------------");
+        log.info("current: " + current);
+        log.info("expTime: " + expTime);
+        log.info("gap: " + gapTime );
+
+        String username = (String)refreshClaims.get("mid");
+        log.info("username: " + username);
+        //이상태까지 오면 무조건 AccessToken은 새로 생성
+        String accessTokenValue = jwtUtil.generateToken(Map.of("username", username), 1);
+
+        String refreshTokenValue = tokens.get("refreshToken");
+
+        //RefrshToken이 3분도 안남았다면..
+//        if(gapTime < (1000 * 60  * 3  ) ){
+        //RefrshToken이 3일도 안남았다면..
+        if(gapTime < (1000 * 60 * 60 * 24 * 3  ) ){
+            log.info("new Refresh Token required...  ");
+            refreshTokenValue = jwtUtil.generateToken(Map.of("username", username), 3);
+        }
+
+        log.info("Refresh Token result....................");
+        log.info("accessToken: " + accessTokenValue);
+        log.info("refreshToken: " + refreshTokenValue);
+//
+        sendTokens(accessTokenValue, refreshTokenValue, response);
 
 
 
@@ -104,4 +156,45 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
     }
 
     // 리플레쉬 토큰 검사 도구 또 추가 될 예정.
+    private Map<String, Object> checkRefreshToken(String refreshToken) throws RefreshTokenException {
+        try {
+            // Refresh Token 검증 및 클레임 데이터 반환
+            return jwtUtil.validateToken(refreshToken);
+
+        } catch (ExpiredJwtException expiredJwtException) {
+            // Refresh Token이 만료된 경우
+            log.error("ExpiredJwtException: Refresh Token has expired.");
+            throw new RefreshTokenException(RefreshTokenException.ErrorCase.OLD_REFRESH);
+
+        } catch (MalformedJwtException malformedJwtException) {
+            // Refresh Token의 형식이 잘못된 경우
+            log.error("MalformedJwtException: Invalid Refresh Token format.");
+            throw new RefreshTokenException(RefreshTokenException.ErrorCase.BAD_REFRESH);
+
+        } catch (Exception exception) {
+            // 기타 예외 발생 시
+            log.error("Unexpected exception during Refresh Token validation: {}", exception.getMessage());
+            throw new RefreshTokenException(RefreshTokenException.ErrorCase.NO_REFRESH);
+        }
+        //return null;
+    }
+
+    private void sendTokens(String accessTokenValue, String refreshTokenValue, HttpServletResponse response) {
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE); // 응답 Content-Type 설정
+
+        // JSON 응답 생성
+        Gson gson = new Gson();
+        String jsonStr = gson.toJson(Map.of(
+                "accessToken", accessTokenValue,
+                "refreshToken", refreshTokenValue
+        ));
+
+        try {
+            // 응답 출력
+            response.getWriter().println(jsonStr);
+        } catch (IOException e) {
+            // IOException 발생 시 RuntimeException으로 래핑하여 던짐
+            throw new RuntimeException("Failed to send tokens to client", e);
+        }
+    }
 }
