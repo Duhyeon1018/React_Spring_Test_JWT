@@ -44,21 +44,33 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         log.info("JWTUtil instance: {}", jwtUtil);
 
         // 다음 필터로 요청 전달
-        filterChain.doFilter(request, response);
+        try {
+            // JWT 유효성 검증
+            validateAccessToken(request);
+
+            // 검증 성공 시 다음 필터로 전달
+            filterChain.doFilter(request, response);
+        } catch (AccessTokenException accessTokenException) {
+            // 검증 실패 시 에러 응답 반환
+            accessTokenException.sendResponseError(response);
+        }
     }
 
     //토큰 검사하는 도구.
     public Map<String, Object> validateAccessToken(HttpServletRequest request) throws AccessTokenException {
         String headerStr = request.getHeader("Authorization");
 
+        // Authorization -> Bearer asdfzxcvzxcv~~~
         // 1. Authorization 헤더가 없는 경우
         if (headerStr == null || headerStr.length() < 8) {
             throw new AccessTokenException(AccessTokenException.TOKEN_ERROR.UNACCEPT);
         }
 
         // 2. 토큰 타입 확인
-        String tokenType = headerStr.substring(0, 6);
-        String tokenStr = headerStr.substring(7);
+        // 01234567  : 7부터 , 토큰의 문자열임.
+        // Bearer asdfzxcvzxcv~~~
+        String tokenType = headerStr.substring(0, 6); //Bearer 추출
+        String tokenStr = headerStr.substring(7); // jwt 토큰 추출
 
         if (!tokenType.equalsIgnoreCase("Bearer")) {
             throw new AccessTokenException(AccessTokenException.TOKEN_ERROR.BADTYPE);
