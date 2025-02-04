@@ -1,7 +1,9 @@
 package com.busanit501.api5012.security.filter;
 
+import com.busanit501.api5012.security.exception.RefreshTokenException;
 import com.busanit501.api5012.util.JWTUtil;
 import com.google.gson.Gson;
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +27,8 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException,  IOException {
+                                    FilterChain filterChain) throws ServletException,  IOException
+    {
 
         String path = request.getRequestURI();
 
@@ -40,7 +43,7 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
         log.info("Refresh Token Filter triggered for path: {}", path);
 
 // 2. 요청에서 accessToken과 refreshToken 추출
-        try {
+
             Map<String, String> tokens = parseRequestJSON(request);
             if (tokens == null || !tokens.containsKey("accessToken") || !tokens.containsKey("refreshToken")) {
                 log.error("Missing tokens in request.");
@@ -55,14 +58,19 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
             log.info("accessToken: {}", accessToken);
             log.info("refreshToken: {}", refreshToken);
 
+            // 이후 로직 추가: Access Token 검증 및 처리
+            try {
+                // Access Token 검증
+                checkAccessToken(accessToken);
+            } catch (RefreshTokenException refreshTokenException) {
+                // RefreshTokenException 발생 시 응답 에러 전송 및 종료
+                refreshTokenException.sendResponseError(response);
+                return; // 더 이상 실행하지 않음
+            }
+
             // 이후 로직 추가: Refresh Token 검증 및 처리
 
-        } catch (Exception e) {
-            log.error("Error parsing request JSON: {}", e.getMessage());
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("Invalid JSON format.");
-            return;
-        }
+
 
 
     }
@@ -79,4 +87,21 @@ public class RefreshTokenFilter extends OncePerRequestFilter {
         }
         return null;
     }
+
+    // 액세스 토큰 검사 도구 추가.
+    private void checkAccessToken(String accessToken) throws RefreshTokenException {
+        try {
+            // Access Token 검증
+            jwtUtil.validateToken(accessToken);
+        } catch (ExpiredJwtException expiredJwtException) {
+            // Access Token 만료 시 로그 출력
+            log.info("Access Token has expired.");
+        } catch (Exception exception) {
+            // 기타 검증 실패 시 예외 발생
+            log.error("Access Token validation failed: {}", exception.getMessage());
+            throw new RefreshTokenException(RefreshTokenException.ErrorCase.NO_ACCESS);
+        }
+    }
+
+    // 리플레쉬 토큰 검사 도구 또 추가 될 예정.
 }
