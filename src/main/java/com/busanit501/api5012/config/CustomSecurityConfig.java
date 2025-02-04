@@ -2,6 +2,7 @@ package com.busanit501.api5012.config;
 
 import com.busanit501.api5012.security.APIUserDetailsService;
 import com.busanit501.api5012.security.filter.APILoginFilter;
+import com.busanit501.api5012.security.filter.RefreshTokenFilter;
 import com.busanit501.api5012.security.filter.TokenCheckFilter;
 import com.busanit501.api5012.security.handler.APILoginSuccessHandler;
 import com.busanit501.api5012.util.JWTUtil;
@@ -90,6 +91,12 @@ public class CustomSecurityConfig {
         http.addFilterBefore(
                 tokenCheckFilter(jwtUtil),
                 UsernamePasswordAuthenticationFilter.class
+        );
+
+        // RefreshTokenFilter를 TokenCheckFilter 이전에 등록
+        http.addFilterBefore(
+                new RefreshTokenFilter("/refreshToken", jwtUtil),
+                TokenCheckFilter.class
         );
 
         http.csrf(httpSecurityCsrfConfigurer -> httpSecurityCsrfConfigurer.disable());

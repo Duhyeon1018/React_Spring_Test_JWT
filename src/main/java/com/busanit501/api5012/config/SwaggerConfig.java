@@ -1,10 +1,11 @@
 package com.busanit501.api5012.config;
 
 import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import io.swagger.v3.oas.models.info.Info;
 
 @Configuration
 public class SwaggerConfig {
@@ -24,10 +25,10 @@ public class SwaggerConfig {
                         .title("레스트 API 테스트")
                         .description("Rest 활용해서 댓글도 구현해보기")
                         .version("1.0.0")
-                );
+                )
         //추가
-        //.addSecurityItem(new SecurityRequirement().addList("Authorization"))
-        //.schemaRequirement("Authorization", securityScheme);
+        .addSecurityItem(new SecurityRequirement().addList("Authorization"))
+        .schemaRequirement("Authorization", securityScheme);
     }
 
 }
