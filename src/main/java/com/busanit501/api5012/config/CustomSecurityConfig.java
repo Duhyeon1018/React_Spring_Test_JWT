@@ -2,7 +2,9 @@ package com.busanit501.api5012.config;
 
 import com.busanit501.api5012.security.APIUserDetailsService;
 import com.busanit501.api5012.security.filter.APILoginFilter;
+import com.busanit501.api5012.security.filter.TokenCheckFilter;
 import com.busanit501.api5012.security.handler.APILoginSuccessHandler;
+import com.busanit501.api5012.util.JWTUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
@@ -30,6 +32,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class CustomSecurityConfig {
     //추가 1-1
     private final APIUserDetailsService apiUserDetailsService;
+    private final JWTUtil jwtUtil;
 
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
@@ -75,7 +78,7 @@ public class CustomSecurityConfig {
         apiLoginFilter.setAuthenticationManager(authenticationManager);
 
         // APILoginSuccessHandler 생성: 인증 성공 후 처리 로직을 담당
-        APILoginSuccessHandler successHandler = new APILoginSuccessHandler();
+        APILoginSuccessHandler successHandler = new APILoginSuccessHandler(jwtUtil);
 
 // SuccessHandler 설정: 로그인 성공 시 APILoginSuccessHandler가 호출되도록 설정
         apiLoginFilter.setAuthenticationSuccessHandler(successHandler);
@@ -83,10 +86,18 @@ public class CustomSecurityConfig {
         //APILoginFilter의 위치 조정 세팅1, 사용자 인증 전에 ,
         http.addFilterBefore(apiLoginFilter, UsernamePasswordAuthenticationFilter.class);
 
+        // /api 경로에 대해 TokenCheckFilter 적용
+        http.addFilterBefore(
+                tokenCheckFilter(jwtUtil),
+                UsernamePasswordAuthenticationFilter.class
+        );
+
         http.csrf(httpSecurityCsrfConfigurer -> httpSecurityCsrfConfigurer.disable());
         http.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
         return http.build();
     }
 
-
+    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil) {
+        return new TokenCheckFilter(jwtUtil);
+    }
 }
