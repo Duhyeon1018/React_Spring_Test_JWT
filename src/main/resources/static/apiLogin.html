@@ -22,7 +22,17 @@
                 // 성공 응답 처리
                 console.log("Token generated:", response.data);
                 console.log("Token generated:", response.data.accessToken);
-                alert("Token: " + response.data.accessToken);
+                // alert("Token: " + response.data.accessToken);
+                // 서버 응답에서 토큰 추출
+                const accessToken = response.data.accessToken;
+                const refreshToken = response.data.refreshToken;
+
+                // 로컬 스토리지에 토큰 저장
+                localStorage.setItem("accessToken", accessToken);
+                localStorage.setItem("refreshToken", refreshToken);
+
+                console.log("Access Token and Refresh Token saved to localStorage.");
+
             })
             .catch(error => {
                 // 오류 응답 처리
