@@ -1,5 +1,7 @@
 package com.busanit501.api5012.controller;
 
+import com.busanit501.api5012.dto.PageRequestDTO;
+import com.busanit501.api5012.dto.PageResponseDTO;
 import com.busanit501.api5012.dto.TodoDTO;
 import com.busanit501.api5012.service.TodoService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +32,25 @@ public class TodoController {
     public TodoDTO read(@PathVariable("tno") Long tno) {
         log.info("read tno: {}", tno);
         return todoService.read(tno);
+    }
+
+    @GetMapping(value = "/list", produces = MediaType.APPLICATION_JSON_VALUE)
+    public PageResponseDTO<TodoDTO> list(PageRequestDTO pageRequestDTO) {
+        return todoService.list(pageRequestDTO);
+    }
+
+    @DeleteMapping(value = "/{tno}")
+    public Map<String, String> delete(@PathVariable Long tno) {
+        todoService.remove(tno);
+        return Map.of("result", "success");
+    }
+
+    @PutMapping(value = "/{tno}", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, String> modify(@PathVariable("tno") Long tno, @RequestBody TodoDTO todoDTO) {
+        // 경로 변수 tno와 요청 본문의 tno가 다를 경우를 방지하기 위해 DTO에 경로 변수 tno를 설정합니다.
+        todoDTO.setTno(tno);
+        todoService.modify(todoDTO);
+        return Map.of("result", "success");
     }
 
 }

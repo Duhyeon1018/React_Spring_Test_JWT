@@ -1,5 +1,6 @@
 package com.busanit501.api5012.security.filter;
 
+import com.busanit501.api5012.security.APIUserDetailsService;
 import com.busanit501.api5012.security.exception.AccessTokenException;
 import com.busanit501.api5012.util.JWTUtil;
 import io.jsonwebtoken.ExpiredJwtException;
@@ -11,6 +12,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -19,7 +23,7 @@ import java.util.Map;
 @Log4j2
 @RequiredArgsConstructor
 public class TokenCheckFilter extends OncePerRequestFilter {
-
+    private final APIUserDetailsService apiUserDetailsService;
     private final JWTUtil jwtUtil;
 
     @Override
@@ -44,16 +48,28 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         log.info("JWTUtil instance: {}", jwtUtil);
 
         // 다음 필터로 요청 전달
+        // 교체 작업.,
         try {
-            // JWT 유효성 검증
-            validateAccessToken(request);
+            Map<String, Object> payload = validateAccessToken(request);
+            // mid 추출
+            String mid = (String) payload.get("mid");
+            log.info("mid: " + mid);
 
-            // 검증 성공 시 다음 필터로 전달
+            UserDetails userDetails = apiUserDetailsService.loadUserByUsername(mid);
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+
+            SecurityContextHolder.getContext().setAuthentication(authentication);
             filterChain.doFilter(request, response);
         } catch (AccessTokenException accessTokenException) {
-            // 검증 실패 시 에러 응답 반환
             accessTokenException.sendResponseError(response);
         }
+
+
     }
 
     //토큰 검사하는 도구.

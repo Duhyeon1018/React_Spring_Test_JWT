@@ -94,7 +94,7 @@ public class CustomSecurityConfig {
 
         // /api 경로에 대해 TokenCheckFilter 적용
         http.addFilterBefore(
-                tokenCheckFilter(jwtUtil),
+                tokenCheckFilter(jwtUtil,apiUserDetailsService),
                 UsernamePasswordAuthenticationFilter.class
         );
 
@@ -112,8 +112,8 @@ public class CustomSecurityConfig {
         return http.build();
     }
 
-    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil) {
-        return new TokenCheckFilter(jwtUtil);
+    private TokenCheckFilter tokenCheckFilter(JWTUtil jwtUtil, APIUserDetailsService apiUserDetailsService){
+        return new TokenCheckFilter(apiUserDetailsService, jwtUtil);
     }
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {

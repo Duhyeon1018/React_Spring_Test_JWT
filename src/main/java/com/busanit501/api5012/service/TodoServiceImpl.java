@@ -1,11 +1,14 @@
 package com.busanit501.api5012.service;
 
 import com.busanit501.api5012.domain.Todo;
+import com.busanit501.api5012.dto.PageRequestDTO;
+import com.busanit501.api5012.dto.PageResponseDTO;
 import com.busanit501.api5012.dto.TodoDTO;
 import com.busanit501.api5012.repository.TodoRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -33,4 +36,31 @@ public class TodoServiceImpl implements TodoService {
         Todo todo = result.orElseThrow(); // 예외 발생 시 자동으로 NoSuchElementException 던짐
         return modelMapper.map(todo, TodoDTO.class);
     }
+
+    @Override
+    public PageResponseDTO<TodoDTO> list(PageRequestDTO pageRequestDTO) {
+        Page<TodoDTO> result = todoRepository.list(pageRequestDTO);
+        return PageResponseDTO.<TodoDTO>withAll()
+                .pageRequestDTO(pageRequestDTO)
+                .dtoList(result.toList())
+                .total((int) result.getTotalElements())
+                .build();
+    }
+    @Override
+    public void remove(Long tno) {
+        todoRepository.deleteById(tno);
+    }
+
+    @Override
+    public void modify(TodoDTO todoDTO) {
+        Optional<Todo> result = todoRepository.findById(todoDTO.getTno());
+        Todo todo = result.orElseThrow();
+
+        todo.changeTitle(todoDTO.getTitle());
+        todo.changeDueDate(todoDTO.getDueDate());
+        todo.changeComplete(todoDTO.isComplete());
+
+        todoRepository.save(todo);
+    }
+
 }
