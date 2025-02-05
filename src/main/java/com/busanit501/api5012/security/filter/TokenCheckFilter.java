@@ -52,7 +52,7 @@ public class TokenCheckFilter extends OncePerRequestFilter {
         try {
             Map<String, Object> payload = validateAccessToken(request);
             // mid 추출
-            String mid = (String) payload.get("mid");
+            String mid = (String) payload.get("username");
             log.info("mid: " + mid);
 
             UserDetails userDetails = apiUserDetailsService.loadUserByUsername(mid);
