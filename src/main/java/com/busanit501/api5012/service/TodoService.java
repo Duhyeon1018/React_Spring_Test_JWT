@@ -6,4 +6,5 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional
 public interface TodoService {
     Long register(TodoDTO todoDTO);
+    TodoDTO read(Long tno);
 }
